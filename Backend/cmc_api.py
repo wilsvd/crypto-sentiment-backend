@@ -30,8 +30,11 @@ class CoinMarketCapAPI():
     
     def _get_dict(self, url : str, parameters):
             response = self.session.get(url, params=parameters)
-            print(response)
-            return json.loads(response.text)
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                raise ConnectionError()
 
     def get_Cryptocurrency_Map_Info(self, status: str ="active", start: str ="1", limit: str ="1000", sort: str = "cmc_rank") -> dict:
         parameters = {

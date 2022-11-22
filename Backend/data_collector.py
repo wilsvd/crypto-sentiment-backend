@@ -1,10 +1,13 @@
 from cmc_api import CoinMarketCapAPI
 from reddit_api import RedditAPI
-from pprint import pprint
+from process_text import TextProcessor
+
+# from pprint import pprint
+from praw.models.reddit.submission import Submission
+
 import json
 
-NUM_POSTS = 5
-CRYPTO_LIMIT = 5
+CRYPTO_LIMIT = 10
 
 class DataCollector():
         
@@ -36,32 +39,55 @@ class DataCollector():
     def _clean_coin_data(self, ids, coin_data):
         subreddits = []
         for id in ids:
+            names = []
             if coin_data[id]['subreddit'] != '':
-                subreddits.append(coin_data[id]['subreddit'])
+                names.append(coin_data[id]['subreddit'])
+            if coin_data[id]['name'] != '':
+                names.append(coin_data[id]['name'])
+            if coin_data[id]['symbol'] != '':
+                names.append(coin_data[id]['symbol'])
+            subreddits.append(names)
         return subreddits
 
     def _get_submission(self, subreddit:str="Cryptocurrency"):
         ratings = {}
-        print(subreddit)
-        encoding = 0
-        for submission in self.reddit.subreddit(subreddit).hot(limit=NUM_POSTS):
-            ratings[submission.title] = encoding
+        encoding = [
+            'NEGATIVE', 'POSITIVE', 
+            'LABEL_0', 'LABEL_1', 'LABEL_2', # 0 is Negative, 1 is Neutral, 2 is Positive
+            'negative', 'neutral', 'positive',
+                0,          1,          2,   # 0 is Bearish, 1 is Neutral, 2 is Bullish
+            ]
+        POST_LIMIT = 50
+        count = 0
+        for submission in self.reddit.subreddit(subreddit).hot():
+            if count == POST_LIMIT:
+                break
+            if (submission.stickied == False and TextProcessor().is_question(submission.title)):
+                ratings[submission.title] = encoding
+                count += 1
+            
         return ratings
       
-    def _find_coin_sentiments(self):
-        subreddits = self._get_coin_subreddits()
-
-        overall_feeling = {}
-        for subreddit in subreddits:
+    def _get_valid_subreddit(self, subreddits_info):
+        for subreddit in subreddits_info:
             options = self.reddit.subreddits.search_by_name(subreddit) # Searches for the subreddit.
             if len(options) > 0:  
                 name = str(options[0])
-                overall_feeling[subreddit] = data._get_submission(name)
+                return name
+
+    def find_coin_sentiments(self):
+        subreddits = self._get_coin_subreddits()
+        overall_feeling = {}
+        for subreddits_info in subreddits:
+            subreddit = self._get_valid_subreddit(subreddits_info)
+            overall_feeling[subreddit] = data._get_submission(subreddit)
+        
+        overall_feeling["Cryptocurrency"] = data._get_submission("Cryptocurrency")
+        overall_feeling["CryptoMoonShoots"] = data._get_submission("CryptoMoonShoots")
         return overall_feeling
 
 data = DataCollector()
-overall_sentiment = data._find_coin_sentiments()
-
+overall_sentiment = data.find_coin_sentiments()
 
 with open("./sentiment/overall_sentiment.json", "w") as outfile:
             json.dump(overall_sentiment, outfile)

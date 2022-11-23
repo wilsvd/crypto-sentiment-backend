@@ -49,18 +49,15 @@ class DataCollector():
             subreddits.append(names)
         return subreddits
 
-    def _get_submission(self, subreddit:str="Cryptocurrency"):
+    def _get_submission(self, subreddit:str="Cryptocurrency", post_limit = 50):
         ratings = {}
         encoding = [
-            'NEGATIVE', 'POSITIVE', 
-            'LABEL_0', 'LABEL_1', 'LABEL_2', # 0 is Negative, 1 is Neutral, 2 is Positive
             'negative', 'neutral', 'positive',
-                0,          1,          2,   # 0 is Bearish, 1 is Neutral, 2 is Bullish
+            'bearish', 'neutral', 'bullish',
             ]
-        POST_LIMIT = 50
         count = 0
         for submission in self.reddit.subreddit(subreddit).hot():
-            if count == POST_LIMIT:
+            if count == post_limit:
                 break
             if (submission.stickied == False and TextProcessor().is_question(submission.title)):
                 ratings[submission.title] = encoding
@@ -82,8 +79,8 @@ class DataCollector():
             subreddit = self._get_valid_subreddit(subreddits_info)
             overall_feeling[subreddit] = data._get_submission(subreddit)
         
-        overall_feeling["Cryptocurrency"] = data._get_submission("Cryptocurrency")
-        overall_feeling["CryptoMoonShoots"] = data._get_submission("CryptoMoonShoots")
+        overall_feeling["Cryptocurrency"] = data._get_submission("Cryptocurrency", 100)
+        overall_feeling["CryptoMoonShoots"] = data._get_submission("CryptoMoonShoots", 100)
         return overall_feeling
 
 data = DataCollector()

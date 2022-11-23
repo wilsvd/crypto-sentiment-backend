@@ -1,0 +1,21 @@
+from transformers import TextClassificationPipeline, AutoModelForSequenceClassification, AutoTokenizer
+from test_models import extract_data
+
+
+model_name = "ElKulako/cryptobert"
+tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
+model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels = 3)
+pipe = TextClassificationPipeline(model=model, tokenizer=tokenizer, max_length=64, truncation=True, padding = 'max_length')
+
+data = extract_data()
+num_correct = 0
+
+for post_data in data:
+    text = post_data[0]
+    ratings = post_data[1]
+    preds = pipe(text)
+    result = preds[0]['label']
+    if result.lower() in ratings:
+        num_correct += 1
+
+print(num_correct)

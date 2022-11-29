@@ -1,7 +1,7 @@
 import json
 from pprint import pprint
 
-SENTIMENTS = "./sentiment/overall_sentiment.json"
+SENTIMENTS = "./sentiment/copy_overall_sentiment.json"
 
 def extract_data():
     with open(SENTIMENTS) as json_file:

@@ -22,6 +22,7 @@ class ScoreManager():
         predictions = df['Predict Label'].to_list()
         references = df['Ground Label'].to_list()
 
+        print(df.tail(20))
         matrix = classification_report(references, predictions, labels=np.unique(references))
         print(matrix)
         self.plot_confusion_matrix("cryptobert", references, predictions)
@@ -32,6 +33,7 @@ class ScoreManager():
         predictions = df['Predict Label'].to_list()
         references = df['Ground Label'].to_list()
 
+        print(df.tail(20))
         matrix = classification_report(references, predictions, labels=np.unique(references))
         print(matrix)
         self.plot_confusion_matrix("autotrain_nlu_crypto", references, predictions)
@@ -42,6 +44,7 @@ class ScoreManager():
         predictions = df['Predict Label'].to_list()
         references = df['Ground Label'].to_list()
 
+        print(df.tail(20))
         matrix = classification_report(references, predictions, labels=np.unique(references))
         print(matrix)
         self.plot_confusion_matrix("twitter_roberta", references, predictions)

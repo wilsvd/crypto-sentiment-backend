@@ -40,7 +40,7 @@ for post_data in data:
         
     predictions.append(get_rating(prediction))
     references.append(get_rating(ratings))
-    break
+    
 data_tuples = list(zip(predictions, references))
 df = pd.DataFrame(data_tuples, columns=['Predict Label','Ground Label'])
-# dump(df, "autotrain_nlu_crypto_comparison.joblib")
+dump(df, "autotrain_nlu_crypto_comparison.joblib")

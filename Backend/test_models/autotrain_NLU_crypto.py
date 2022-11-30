@@ -43,4 +43,4 @@ for post_data in data:
     
 data_tuples = list(zip(predictions, references))
 df = pd.DataFrame(data_tuples, columns=['Predict Label','Ground Label'])
-dump(df, "autotrain_nlu_crypto_comparison.joblib")
+dump(df, "./test_models/joblibs/autotrain_nlu_crypto_comparison.joblib")

@@ -18,7 +18,7 @@ class ScoreManager():
 
     def cryptobert_score(self):
         df : pd.DataFrame
-        df = load("cryptobert_comparison.joblib")
+        df = load("./test_models/joblibs/cryptobert_comparison.joblib")
         predictions = df['Predict Label'].to_list()
         references = df['Ground Label'].to_list()
 
@@ -29,7 +29,7 @@ class ScoreManager():
         
     def autotrain_NLU_crypto_score(self):
         df : pd.DataFrame
-        df = load("autotrain_nlu_crypto_comparison.joblib")
+        df = load("./test_models/joblibs/autotrain_nlu_crypto_comparison.joblib")
         predictions = df['Predict Label'].to_list()
         references = df['Ground Label'].to_list()
 
@@ -40,7 +40,7 @@ class ScoreManager():
 
     def twitter_roberta_base_latest_score(self):
         df : pd.DataFrame
-        df = load("twitter_roberta_comparison.joblib")
+        df = load("./test_models/joblibs/twitter_roberta_comparison.joblib")
         predictions = df['Predict Label'].to_list()
         references = df['Ground Label'].to_list()
 

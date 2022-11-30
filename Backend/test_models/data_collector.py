@@ -4,12 +4,10 @@ from process_text import TextProcessor
 
 # from pprint import pprint
 from praw.models.reddit.submission import Submission
-from sentiment_classifier import SentimentClassifier
 
 import json
 
 CRYPTO_LIMIT = 10
-POST_LIMIT = 100
 
 class DataCollector():
         
@@ -20,7 +18,6 @@ class DataCollector():
         r_api = RedditAPI()
         self.reddit = r_api.connect_to_reddit()
         self._set_coin_ids()
-        self.classifier = SentimentClassifier()
         
     def _get_coin_ids(self):
         return self.m_ids
@@ -52,17 +49,21 @@ class DataCollector():
             subreddits.append(names)
         return subreddits
 
-    def _get_submission(self, subreddit:str="Cryptocurrency"):
-        total_sentiment = 0
-        post_count = 0
+    def _get_submission(self, subreddit:str="Cryptocurrency", post_limit = 50):
+        ratings = {}
+        encoding = [
+            'negative', 'neutral', 'positive',
+            'bearish', 'neutral', 'bullish',
+            ]
+        count = 0
         for submission in self.reddit.subreddit(subreddit).hot():
+            if count == post_limit:
+                break
             if (submission.stickied == False and TextProcessor().is_question(submission.title)):
-                sentiment = self.classifier.predict_sentiment(submission.title)
-                post_count += 1
-                total_sentiment += sentiment
-        
-        result = {"sentiment": round(total_sentiment/post_count, 2)}              
-        return result
+                ratings[submission.title] = encoding
+                count += 1
+            
+        return ratings
       
     def _get_valid_subreddit(self, subreddits_info):
         for subreddit in subreddits_info:
@@ -77,12 +78,14 @@ class DataCollector():
         for subreddits_info in subreddits:
             subreddit = self._get_valid_subreddit(subreddits_info)
             overall_feeling[subreddit] = data._get_submission(subreddit)
-    
+        
+        overall_feeling["Cryptocurrency"] = data._get_submission("Cryptocurrency", 100)
+        overall_feeling["CryptoMoonShoots"] = data._get_submission("CryptoMoonShoots", 100)
         return overall_feeling
 
 data = DataCollector()
 overall_sentiment = data.find_coin_sentiments()
 
-with open("./sentiment/sentiment_data.json", "w") as outfile:
+with open("./sentiment/overall_sentiment.json", "w") as outfile:
             json.dump(overall_sentiment, outfile)
 

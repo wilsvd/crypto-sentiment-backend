@@ -2,7 +2,25 @@ import Head from "next/head";
 import Image from "next/image";
 import Navbar from "../components/navbar";
 import styles from "../styles/Home.module.css";
-import CryptoTable from "../components/crypto_table";
+import Profile from "../components/crypto_table";
+
+// This function gets called at build time on server-side.
+// It won't be called on client-side, so you can even do
+// direct database queries.
+export async function getStaticProps() {
+	// Call an external API endpoint to get posts.
+	// You can use any data fetching library
+	const res = await fetch("http://localhost:8000/");
+	const posts = await res.json();
+
+	// By returning { props: { posts } }, the Blog component
+	// will receive `posts` as a prop at build time
+	return {
+		props: {
+			posts,
+		},
+	};
+}
 
 export default function Home() {
 	return (
@@ -22,7 +40,7 @@ export default function Home() {
 			</h1>
 
 			<main className={styles.main}>
-				<CryptoTable></CryptoTable>
+				<Profile></Profile>
 			</main>
 		</div>
 	);

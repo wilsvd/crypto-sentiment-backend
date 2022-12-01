@@ -76,13 +76,8 @@ class DataCollector():
         overall_feeling = {}
         for subreddits_info in subreddits:
             subreddit = self._get_valid_subreddit(subreddits_info)
-            overall_feeling[subreddit] = data._get_submission(subreddit)
+            overall_feeling[subreddit] = self._get_submission(subreddit)
     
         return overall_feeling
 
-data = DataCollector()
-overall_sentiment = data.find_coin_sentiments()
-
-with open("./sentiment/sentiment_data.json", "w") as outfile:
-            json.dump(overall_sentiment, outfile)
 

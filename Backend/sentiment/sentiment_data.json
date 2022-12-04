@@ -1,12 +1,32 @@
 {
-	"Bitcoin": { "sentiment": -0.06 },
-	"ethereum": { "sentiment": 0.11 },
-	"Tether": { "sentiment": 0.19 },
-	"bnbchainofficial": { "sentiment": 0.36 },
-	"USDC": { "sentiment": 0.04 },
-	"BinanceUSD": { "sentiment": 0.0 },
-	"Ripple": { "sentiment": 0.02 },
-	"dogecoin": { "sentiment": 0.42 },
-	"cardano": { "sentiment": 0.05 },
-	"0xPolygon": { "sentiment": 0.28 }
+    "Bitcoin": {
+        "sentiment": -0.03
+    },
+    "ethereum": {
+        "sentiment": -0.01
+    },
+    "Tether": {
+        "sentiment": 0.19
+    },
+    "bnbchainofficial": {
+        "sentiment": 0.39
+    },
+    "USDC": {
+        "sentiment": 0.04
+    },
+    "BinanceUSD": {
+        "sentiment": 0.0
+    },
+    "Ripple": {
+        "sentiment": 0.02
+    },
+    "dogecoin": {
+        "sentiment": 0.44
+    },
+    "cardano": {
+        "sentiment": 0.11
+    },
+    "0xPolygon": {
+        "sentiment": 0.3
+    }
 }

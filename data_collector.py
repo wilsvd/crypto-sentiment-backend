@@ -6,10 +6,15 @@ from process_text import TextProcessor
 from praw.models.reddit.submission import Submission
 from sentiment_classifier import SentimentClassifier
 
+import time
+
 import json
 
-CRYPTO_LIMIT = 10
-POST_LIMIT = 100
+CRYPTO_LIMIT = 100
+
+# TODO: Use the post limit specified
+
+POST_LIMIT = 50
 
 class DataCollector():
         
@@ -42,17 +47,19 @@ class DataCollector():
     def _clean_coin_data(self, ids, coin_data):
         subreddits = []
         for id in ids:
-            names = []
+            result = ""
             if coin_data[id]['subreddit'] != '':
-                names.append(coin_data[id]['subreddit'])
-            if coin_data[id]['name'] != '':
-                names.append(coin_data[id]['name'])
-            if coin_data[id]['symbol'] != '':
-                names.append(coin_data[id]['symbol'])
-            subreddits.append(names)
+                result = (coin_data[id]['subreddit'])
+            elif coin_data[id]['name'] != '':
+                result = (coin_data[id]['name'])
+            elif coin_data[id]['symbol'] != '':
+                result = (coin_data[id]['symbol'])
+            subreddits.append(result)
         return subreddits
 
-    def _get_submission(self, subreddit:str="Cryptocurrency"):
+    # TODO: Optimise _get_submission function.
+    def _get_submission(self, subreddit):
+
         total_sentiment = 0
         post_count = 0
         for submission in self.reddit.subreddit(subreddit).hot():
@@ -60,24 +67,41 @@ class DataCollector():
                 sentiment = self.classifier.predict_sentiment(submission.title)
                 post_count += 1
                 total_sentiment += sentiment
+        # Account for a division by 0 error by just returning None
+        if post_count == 0:
+            return None
         
         result = {"sentiment": round(total_sentiment/post_count, 2)}              
         return result
       
     def _get_valid_subreddit(self, subreddits_info):
-        for subreddit in subreddits_info:
-            options = self.reddit.subreddits.search_by_name(subreddit) # Searches for the subreddit.
-            if len(options) > 0:  
-                name = str(options[0])
-                return name
+            options = self.reddit.subreddits.search_by_name(subreddits_info) # Searches for the subreddit.
+            if len(options) > 0:
+                return str(options[0])
 
     def find_coin_sentiments(self):
         subreddits = self._get_coin_subreddits()
         overall_feeling = {}
+
+        valid_subreddits = []
         for subreddits_info in subreddits:
             subreddit = self._get_valid_subreddit(subreddits_info)
-            overall_feeling[subreddit] = self._get_submission(subreddit)
-    
+            valid_subreddits.append(subreddit)
+        
+        print(valid_subreddits)
+        for subreddit in valid_subreddits:
+            result = self._get_submission(subreddit)
+            if result:
+                overall_feeling[subreddit] = result
+        
         return overall_feeling
 
+# Top 10
+import time
 
+start = time.time()
+data = DataCollector()
+overall_sentiment = data.find_coin_sentiments()
+end = time.time()
+
+print(f"Time taken: {end-start}")

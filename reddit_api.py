@@ -14,7 +14,9 @@ class RedditAPI():
     def connect_to_reddit(self):
         reddit = praw.Reddit(client_id=CLIENT_ID,
                         client_secret=CLIENT_SECRET,
-                        user_agent=USER_AGENT)
+                        user_agent=USER_AGENT,
+                        ratelimit_seconds=600
+                        )
         
         handler = logging.StreamHandler()
         handler.setLevel(logging.DEBUG)

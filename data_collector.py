@@ -12,7 +12,7 @@ import time
 
 import json
 
-CRYPTO_LIMIT = 20
+CRYPTO_LIMIT = 100
 
 # TODO: Use the post limit specified
 POST_LIMIT = 50
@@ -26,6 +26,13 @@ class DataCollector():
         self.r_api = RedditAPI()
         self._set_coin_ids()
         self.classifier = SentimentClassifier()
+
+        self.worker_queue = []
+        for i in range(4):
+            helper = self.r_api.connect_to_reddit(i)
+            self.worker_queue.insert(0,helper)
+
+        # First in - First out.
         
     def _get_coin_ids(self):
         return self.m_ids
@@ -84,16 +91,14 @@ class DataCollector():
 
     def find_coin_sentiments(self):
         total_subreddits = self._get_coin_subreddits()
-        # Partition total_subreddits as evenly as possible
-        partitions = np.array_split(total_subreddits, 4)
         overall_feeling = {}
 
-        for worker, partition in enumerate(partitions):
-            reddit_helper = self.r_api.connect_to_reddit(worker)
-            for subreddit in partition:
-                result = self._get_submission(reddit_helper, subreddit)
-                if result:
-                    overall_feeling[subreddit] = result        
+        for worker, subreddit in  enumerate(total_subreddits):
+            worker_index = worker % 4
+            reddit_helper = self.worker_queue[worker_index]
+            result = self._get_submission(reddit_helper, subreddit)
+            if result:
+                overall_feeling[subreddit] = result        
         
         return overall_feeling
 

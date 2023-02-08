@@ -28,7 +28,7 @@ class RedditAPI():
     def connect_to_reddit(self, worker):
 
         if worker == WORKER_ZERO:
-            print("worker 0")
+            print("worker0")
             reddit = praw.Reddit(client_id=os.getenv("REDDIT_WORKER_ONE_CLIENT_ID"),
                         client_secret=os.getenv("REDDIT_WORKER_ONE_CLIENT_SECRET"),
                         user_agent=USER_AGENT,

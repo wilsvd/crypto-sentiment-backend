@@ -2,6 +2,8 @@ from cmc_api import CoinMarketCapAPI
 from reddit_api import RedditAPI
 from process_text import TextProcessor
 
+import numpy as np
+
 # from pprint import pprint
 from praw.models.reddit.submission import Submission
 from sentiment_classifier import SentimentClassifier
@@ -10,10 +12,9 @@ import time
 
 import json
 
-CRYPTO_LIMIT = 100
+CRYPTO_LIMIT = 20
 
 # TODO: Use the post limit specified
-
 POST_LIMIT = 50
 
 class DataCollector():
@@ -22,8 +23,7 @@ class DataCollector():
 
     def __init__(self) -> None:    
         self.cmc = CoinMarketCapAPI()
-        r_api = RedditAPI()
-        self.reddit = r_api.connect_to_reddit()
+        self.r_api = RedditAPI()
         self._set_coin_ids()
         self.classifier = SentimentClassifier()
         
@@ -47,61 +47,55 @@ class DataCollector():
     def _clean_coin_data(self, ids, coin_data):
         subreddits = []
         for id in ids:
-            result = ""
-            if coin_data[id]['subreddit'] != '':
-                result = (coin_data[id]['subreddit'])
-            elif coin_data[id]['name'] != '':
-                result = (coin_data[id]['name'])
-            elif coin_data[id]['symbol'] != '':
-                result = (coin_data[id]['symbol'])
-            subreddits.append(result)
+            subredditName = coin_data[id]['subreddit']
+            if subredditName != '' or subredditName != "":
+                subreddits.append(subredditName)
+            
         return subreddits
 
     # TODO: Optimise _get_submission function.
-    def _get_submission(self, subreddit):
+    def _get_submission(self, reddit_helper, subreddit):
 
         total_sentiment = 0
         post_count = 0
-        for submission in self.reddit.subreddit(subreddit).hot():
-            if (submission.stickied == False and TextProcessor().is_question(submission.title)):
-                sentiment = self.classifier.predict_sentiment(submission.title)
-                post_count += 1
-                total_sentiment += sentiment
-        # Account for a division by 0 error by just returning None
-        if post_count == 0:
-            return None
-        
-        result = {"sentiment": round(total_sentiment/post_count, 2)}              
-        return result
+        # NOTE: PRAW is fetching 100 submissions in one request.
+
+        try:
+            submissions = reddit_helper.subreddit(subreddit).hot()
+            for submission in submissions:
+                if (submission.stickied == False and TextProcessor().is_question(submission.title)):
+                    sentiment = self.classifier.predict_sentiment(submission.title)
+                    post_count += 1
+                    total_sentiment += sentiment
+            # Account for a division by 0 error by just returning None (Effectively ignoring the subreddit)
+            if post_count == 0:
+                return None
+            
+            result = {"sentiment": round(total_sentiment/post_count, 2)}              
+            return result
+        except:
+            print("Subreddit does not exist")
+            return None        
       
-    def _get_valid_subreddit(self, subreddits_info):
-            options = self.reddit.subreddits.search_by_name(subreddits_info) # Searches for the subreddit.
-            if len(options) > 0:
-                return str(options[0])
+    # def _get_valid_subreddit(self, subreddits_info):
+    #         options = self.reddit.subreddits.search_by_name(subreddits_info) # Searches for the subreddit.
+    #         if len(options) > 0:
+    #             return str(options[0])
 
     def find_coin_sentiments(self):
-        subreddits = self._get_coin_subreddits()
+        total_subreddits = self._get_coin_subreddits()
+        # Partition total_subreddits as evenly as possible
+        partitions = np.array_split(total_subreddits, 4)
         overall_feeling = {}
 
-        valid_subreddits = []
-        for subreddits_info in subreddits:
-            subreddit = self._get_valid_subreddit(subreddits_info)
-            valid_subreddits.append(subreddit)
-        
-        print(valid_subreddits)
-        for subreddit in valid_subreddits:
-            result = self._get_submission(subreddit)
-            if result:
-                overall_feeling[subreddit] = result
+        for worker, partition in enumerate(partitions):
+            reddit_helper = self.r_api.connect_to_reddit(worker)
+            for subreddit in partition:
+                result = self._get_submission(reddit_helper, subreddit)
+                if result:
+                    overall_feeling[subreddit] = result        
         
         return overall_feeling
 
 # Top 10
-import time
 
-start = time.time()
-data = DataCollector()
-overall_sentiment = data.find_coin_sentiments()
-end = time.time()
-
-print(f"Time taken: {end-start}")

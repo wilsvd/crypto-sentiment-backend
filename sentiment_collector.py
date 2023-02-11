@@ -41,14 +41,13 @@ class SentimentCollector:
             if post_count == 0:
                 return None
 
-            result = {"sentiment": round(total_sentiment / post_count, 2)}
-            return result
+            return round(total_sentiment / post_count, 2)
         except:
             print("Subreddit does not exist")
             return None
 
     def find_crypto_sentiments(self, total_subreddits):
-        overall_feeling = {}
+        overall_feeling = []
 
         # Partition total_subreddits as evenly as possible
         partitions = np.array_split(total_subreddits, 4)
@@ -60,29 +59,26 @@ class SentimentCollector:
             for worker, partition in enumerate(partitions):
                 reddit_helper = reddit_helpers[worker]
                 future = executor.submit(
-                    self.find_partition_sentiment, partition, reddit_helper
+                    self.find_partition_sentiment,
+                    partition,
+                    reddit_helper,
+                    overall_feeling,
                 )
                 threadFutures.append(future)
 
         for future in threadFutures:
-            print(future.result())
-        # for worker, subreddit in enumerate(total_subreddits):
-        #     worker_index = worker % 4
-        #     reddit_helper = self.worker_queue[worker_index]
-        #     result = self._get_submission(reddit_helper, subreddit)
-        #     if result:
-        #         overall_feeling[subreddit] = result
+            for items in future.result():
+                overall_feeling.append(items)
+        return overall_feeling
 
-        # return overall_feeling
+    def find_partition_sentiment(self, partition, reddit_helper, overall_feeling):
+        partition_sentiment = []
 
-    def find_partition_sentiment(self, partition, reddit_helper):
-        partition_sentiment = {}
         for subreddit in partition:
+            crypto_data = {}
             result = self._get_submission(reddit_helper, subreddit)
             if result:
-                partition_sentiment[subreddit] = result
-        # print(partition_sentiment)
+                crypto_data["cryptocurrency"] = subreddit
+                crypto_data["sentiment"] = result
+                partition_sentiment.append(crypto_data)
         return partition_sentiment
-
-
-# Top 10

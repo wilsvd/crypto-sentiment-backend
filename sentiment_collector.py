@@ -11,11 +11,12 @@ from concurrent.futures import ThreadPoolExecutor
 # TODO: Use the post limit specified
 POST_LIMIT = 50
 
-class SentimentCollector():
-        
+
+class SentimentCollector:
+
     m_ids = []
 
-    def __init__(self) -> None:    
+    def __init__(self) -> None:
         self.r_api = RedditAPI()
         self.classifier = SentimentClassifier()
 
@@ -29,48 +30,49 @@ class SentimentCollector():
         try:
             submissions = reddit_helper.subreddit(subreddit).hot()
             for submission in submissions:
-                if (submission.stickied == False and TextProcessor().is_question(submission.title)):
+                if submission.stickied == False and TextProcessor().is_question(
+                    submission.title
+                ):
                     sentiment = self.classifier.predict_sentiment(submission.title)
                     post_count += 1
                     total_sentiment += sentiment
+            print(reddit_helper.auth.limits)
             # Account for a division by 0 error by just returning None (Effectively ignoring the subreddit)
             if post_count == 0:
                 return None
-            
-            result = {"sentiment": round(total_sentiment/post_count, 2)}              
+
+            result = {"sentiment": round(total_sentiment / post_count, 2)}
             return result
         except:
             print("Subreddit does not exist")
-            return None        
-      
-    # def _get_valid_subreddit(self, subreddits_info):
-    #         options = self.reddit.subreddits.search_by_name(subreddits_info) # Searches for the subreddit.
-    #         if len(options) > 0:
-    #             return str(options[0])
+            return None
 
     def find_crypto_sentiments(self, total_subreddits):
-        # overall_feeling = {}
+        overall_feeling = {}
 
         # Partition total_subreddits as evenly as possible
         partitions = np.array_split(total_subreddits, 4)
 
+        reddit_helpers = self.r_api.multi_acc_multi_instance()
+
+        threadFutures = []
         with ThreadPoolExecutor(max_workers=4) as executor:
             for worker, partition in enumerate(partitions):
-                reddit_helper = self.r_api.connect_to_reddit(worker)
-                executor.submit(self.find_partition_sentiment, partition, reddit_helper)
+                reddit_helper = reddit_helpers[worker]
+                future = executor.submit(
+                    self.find_partition_sentiment, partition, reddit_helper
+                )
+                threadFutures.append(future)
 
-        # for worker, partition in enumerate(partitions):
-        #     reddit_helper = self.r_api.connect_to_reddit(worker)
-        #     t = Thread(target=self.find_partition_sentiment, args=(partition, reddit_helper))
-        #     t.start()
-
+        for future in threadFutures:
+            print(future.result())
         # for worker, subreddit in enumerate(total_subreddits):
         #     worker_index = worker % 4
         #     reddit_helper = self.worker_queue[worker_index]
         #     result = self._get_submission(reddit_helper, subreddit)
         #     if result:
-        #         overall_feeling[subreddit] = result        
-        
+        #         overall_feeling[subreddit] = result
+
         # return overall_feeling
 
     def find_partition_sentiment(self, partition, reddit_helper):
@@ -78,10 +80,9 @@ class SentimentCollector():
         for subreddit in partition:
             result = self._get_submission(reddit_helper, subreddit)
             if result:
-                partition_sentiment[subreddit] = result  
-        print(partition_sentiment)
-        # return partition_sentiment
+                partition_sentiment[subreddit] = result
+        # print(partition_sentiment)
+        return partition_sentiment
+
 
 # Top 10
-
-

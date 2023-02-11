@@ -1,8 +1,6 @@
 from reddit_api import RedditAPI
 
-import time
-
-import praw.reddit
+import numpy as np
 
 # from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
@@ -55,23 +53,33 @@ class SentimentCollector:
         # self._get_submission(single_multi[0], total_subreddits[0])
 
         # NOTE: Multi Acc/Multi PRAW --- Alternating
+        # for worker, subreddit in enumerate(total_subreddits):
+        #     worker_index = worker % 4
+        #     reddit_helper = multi_multi[worker_index]
+        #     self._get_submission(reddit_helper, subreddit)
 
-        for worker, subreddit in enumerate(total_subreddits):
-            worker_index = worker % 4
-            reddit_helper = multi_multi[worker_index]
-            self._get_submission(reddit_helper, subreddit)
+        # Partition total_subreddits as evenly as possible
+        partitions = np.array_split(total_subreddits, 4)
 
         # NOTE: Single Acc/Multi PRAW --- Multi-threading
-
+        # with ThreadPoolExecutor(max_workers=4) as executor:
+        #     for worker, partition in enumerate(partitions):
+        #         reddit_helper = single_multi[worker]
+        #         future = executor.submit(
+        #             self.find_partition_sentiment,
+        #             partition,
+        #             reddit_helper,
+        #         )
         # NOTE: Multi Acc/Multi PRAW --- Multi-threading
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            for worker, partition in enumerate(partitions):
+                reddit_helper = multi_multi[worker]
+                future = executor.submit(
+                    self.find_partition_sentiment,
+                    partition,
+                    reddit_helper,
+                )
 
-        # return overall_feeling
-
-    # def find_partition_sentiment(self, partition, reddit_helper):
-    #     partition_sentiment = {}
-    #     for subreddit in partition:
-    #         result = self._get_submission(reddit_helper, subreddit)
-    #         if result:
-    #             partition_sentiment[subreddit] = result
-    #     print(partition_sentiment)
-    # return partition_sentiment
+    def find_partition_sentiment(self, partition, reddit_helper):
+        for subreddit in partition:
+            self._get_submission(reddit_helper, subreddit)

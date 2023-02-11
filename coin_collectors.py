@@ -1,6 +1,10 @@
 from cmc_api import CoinMarketCapAPI
 
-CRYPTO_LIMIT = "200"
+from pprint import pprint
+
+# NOTE: 965 Is the upper limit. If I go higher than I get an Error
+# TODO: Adapt the CMC API Setup to able to retrieve more than 965 cryptocurrencies.
+CRYPTO_LIMIT = "100"
 
 
 class CoinCollector:
@@ -23,7 +27,7 @@ class CoinCollector:
             ids.append(str(item["id"]))
         self.m_ids = ids
 
-    def _get_coin_subreddits(self):
+    def get_coin_subreddits(self):
         coin_ids = self._get_coin_ids()
         ids = ",".join(coin_ids)
         cmc_meta = self.cmc.get_Cryptocurrency_Meta_Info(ids)
@@ -34,7 +38,7 @@ class CoinCollector:
         subreddits = []
         for id in ids:
             subredditName = coin_data[id]["subreddit"]
-            if subredditName != "" or subredditName != "":
+            if subredditName != "":
                 subreddits.append(subredditName)
 
         return subreddits

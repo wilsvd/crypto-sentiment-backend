@@ -23,12 +23,12 @@ class SentimentCollector:
     def _get_submission(self, reddit_helper, subreddit):
 
         try:
-
             submissions = reddit_helper.subreddit(subreddit).hot(limit=POST_LIMIT)
             # PRAW Uses lazy loading so the fetch only occurs once the data is actually going to be used.
             count = 0
             for submission in submissions:
                 count += 1
+            print(reddit_helper.auth.limits)
         except:
             print("Subreddit does not exist")
 
@@ -41,27 +41,25 @@ class SentimentCollector:
         # single = self.r_api.single_instance()
         # reddit_helper = single[0]
         # for subreddit in total_subreddits:
-        # self._get_submission(reddit_helper, subreddit)
+        #     self._get_submission(reddit_helper, subreddit)
 
         # single_multi = self.r_api.single_acc_multi_instance()
-        # multi_multi = self.r_api.multi_acc_multi_instance()
-
-        # print(multi_multi[0].auth.limits)
-        # print(multi_multi[1].auth.limits)
-        # print(multi_multi[2].auth.limits)
+        multi_multi = self.r_api.multi_acc_multi_instance()
 
         # NOTE: Single Acc/Multi PRAW --- Alternating
         # for worker, subreddit in enumerate(total_subreddits):
         #     worker_index = worker % 4
         #     reddit_helper = single_multi[worker_index]
-        #     print(reddit_helper.auth.limits)
         #     self._get_submission(reddit_helper, subreddit)
 
+        # self._get_submission(single_multi[0], total_subreddits[0])
+
         # NOTE: Multi Acc/Multi PRAW --- Alternating
-        # for worker, subreddit in enumerate(total_subreddits):
-        #     worker_index = worker % 4
-        #     reddit_helper = self.multi_multi[worker_index]
-        #     self._get_submission(reddit_helper, subreddit)
+
+        for worker, subreddit in enumerate(total_subreddits):
+            worker_index = worker % 4
+            reddit_helper = multi_multi[worker_index]
+            self._get_submission(reddit_helper, subreddit)
 
         # NOTE: Single Acc/Multi PRAW --- Multi-threading
 

@@ -91,9 +91,6 @@ class RedditAPI:
             redirect_uri="http://localhost:8080",
             user_agent=USER_AGENT,
         )
-
-        print(reddit.auth.url(scopes=["identity"], state="...", duration="permanent"))
-
         return reddit
 
 

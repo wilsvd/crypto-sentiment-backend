@@ -1,8 +1,8 @@
 from sentiment_collector import SentimentCollector
 from coin_collectors import CoinCollector
 
+import time
 import json
-
 import os
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
@@ -14,9 +14,7 @@ print(sentiment_path)
 data = SentimentCollector()
 coins = CoinCollector()
 
-subreddits = coins._get_coin_subreddits()
-
-import time
+subreddits = coins.get_coin_subreddits()
 
 
 def runner():

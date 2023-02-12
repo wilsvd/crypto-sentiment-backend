@@ -67,22 +67,6 @@ class RedditAPI:
 
         return [instance1, instance2, instance3, instance4]
 
-    def single_acc_multi_instance(self):
-        instance1 = self._setup_instance(
-            ONE_CLIENT_ID, ONE_CLIENT_SECRET, ONE_CLIENT_REFRESH_TOKEN
-        )
-        instance2 = self._setup_instance(
-            ONE_CLIENT_ID, ONE_CLIENT_SECRET, ONE_CLIENT_REFRESH_TOKEN
-        )
-        instance3 = self._setup_instance(
-            ONE_CLIENT_ID, ONE_CLIENT_SECRET, ONE_CLIENT_REFRESH_TOKEN
-        )
-        instance4 = self._setup_instance(
-            ONE_CLIENT_ID, ONE_CLIENT_SECRET, ONE_CLIENT_REFRESH_TOKEN
-        )
-
-        return [instance1, instance2, instance3, instance4]
-
     def _setup_instance(self, client_id, client_secret, refresh_token):
         reddit = praw.Reddit(
             client_id=client_id,

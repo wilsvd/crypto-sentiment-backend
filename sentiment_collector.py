@@ -24,24 +24,23 @@ class SentimentCollector:
     def _get_submission(self, reddit_helper, subreddit):
 
         total_sentiment = 0
-        post_count = 0
         # NOTE: PRAW is fetching 100 submissions in one request.
 
         try:
+            posts = []
             submissions = reddit_helper.subreddit(subreddit).hot()
             for submission in submissions:
                 if submission.stickied == False and TextProcessor().is_question(
                     submission.title
                 ):
-                    sentiment = self.classifier.predict_sentiment(submission.title)
-                    post_count += 1
-                    total_sentiment += sentiment
+                    posts.append(submission.title)
+
             print(reddit_helper.auth.limits)
             # Account for a division by 0 error by just returning None (Effectively ignoring the subreddit)
-            if post_count == 0:
-                return None
 
-            return round(total_sentiment / post_count, 2)
+            sentiment = self.classifier.predict_sentiment(posts)
+
+            return sentiment
         except:
             print("Subreddit does not exist")
             return None
@@ -59,10 +58,7 @@ class SentimentCollector:
             for worker, partition in enumerate(partitions):
                 reddit_helper = reddit_helpers[worker]
                 future = executor.submit(
-                    self.find_partition_sentiment,
-                    partition,
-                    reddit_helper,
-                    overall_feeling,
+                    self.find_partition_sentiment, partition, reddit_helper
                 )
                 threadFutures.append(future)
 
@@ -71,14 +67,14 @@ class SentimentCollector:
                 overall_feeling.append(items)
         return overall_feeling
 
-    def find_partition_sentiment(self, partition, reddit_helper, overall_feeling):
+    def find_partition_sentiment(self, partition, reddit_helper):
         partition_sentiment = []
 
         for subreddit in partition:
-            crypto_data = {}
             result = self._get_submission(reddit_helper, subreddit)
             if result:
-                crypto_data["cryptocurrency"] = subreddit
-                crypto_data["sentiment"] = result
-                partition_sentiment.append(crypto_data)
+                partition_sentiment.append(
+                    {"cryptocurrency": subreddit, "sentiment": result}
+                )
+
         return partition_sentiment

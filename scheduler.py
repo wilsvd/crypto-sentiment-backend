@@ -1,5 +1,6 @@
 from sentiment_collector import SentimentCollector
 from coin_collectors import CoinCollector
+from firebase import FirebaseDatabase
 
 import time
 import json
@@ -13,6 +14,7 @@ print(sentiment_path)
 
 data = SentimentCollector()
 coins = CoinCollector()
+database = FirebaseDatabase()
 
 subreddits = coins.get_coin_subreddits()
 
@@ -21,8 +23,7 @@ def runner():
     start = time.time()
     print("JOB START")
     overall_sentiment = data.find_crypto_sentiments(subreddits)
-    with open(sentiment_path, "w") as outfile:
-        json.dump(overall_sentiment, outfile)
+    database.set_data(overall_sentiment)
     print("JOB DONE")
     end = time.time()
     print(f"Time taken: {end-start}")

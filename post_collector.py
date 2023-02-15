@@ -1,6 +1,6 @@
 from reddit_api import RedditAPI
 from process_text import TextProcessor
-from sentiment_classifier import SentimentClassifier
+from classifier import SentimentClassifier
 
 import numpy as np
 
@@ -13,7 +13,6 @@ POST_LIMIT = 50
 
 
 class SentimentCollector:
-
     m_ids = []
 
     def __init__(self) -> None:
@@ -22,7 +21,6 @@ class SentimentCollector:
 
     # TODO: Optimise _get_submission function.
     def _get_submission(self, reddit_helper, subreddit):
-
         total_sentiment = 0
         # NOTE: PRAW is fetching 100 submissions in one request.
 

@@ -37,8 +37,16 @@ class CoinCollector:
     def _clean_coin_data(self, ids, coin_data):
         subreddits = []
         for id in ids:
-            subredditName = coin_data[id]["subreddit"]
+            subredditName: str = coin_data[id]["subreddit"]
             if subredditName != "":
-                subreddits.append(subredditName)
+                cleanName = "".join(
+                    (
+                        filter(
+                            lambda i: i not in ["$", "#", "[", "]", "/", "."],
+                            subredditName,
+                        )
+                    )
+                )
+                subreddits.append(cleanName)
 
         return subreddits

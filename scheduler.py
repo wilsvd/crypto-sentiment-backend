@@ -1,32 +1,22 @@
-from sentiment_collector import SentimentCollector
-from coin_collectors import CoinCollector
+from post_collector import SentimentCollector
+from coin_collector import CoinCollector
 from firebase import FirebaseDatabase
 
-import time
-import json
 import os
 
-dir_path = os.path.dirname(os.path.abspath(__file__))
+import time
 
-print(dir_path)
-sentiment_path = os.path.join(dir_path, "sentiment/sentiment_data.json")
-print(sentiment_path)
+from pprint import pprint
 
-data = SentimentCollector()
-coins = CoinCollector()
-database = FirebaseDatabase()
-
-subreddits = coins.get_coin_subreddits()
-
-
-def runner():
-    start = time.time()
+if __name__ == "__main__":
+    data = SentimentCollector()
+    coins = CoinCollector()
+    database = FirebaseDatabase()
     print("JOB START")
-    overall_sentiment = data.find_crypto_sentiments(subreddits)
+    start = time.time()
+    subreddits = coins.get_coin_subreddits()
+    overall_sentiment = data.find_crypto_sentiments(subreddits, database)
     database.set_data(overall_sentiment)
-    print("JOB DONE")
     end = time.time()
+    print("JOB DONE")
     print(f"Time taken: {end-start}")
-
-
-runner()

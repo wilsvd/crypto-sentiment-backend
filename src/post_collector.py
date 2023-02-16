@@ -97,7 +97,9 @@ class SentimentCollector:
 
         reddit_helpers = self.r_api.multi_acc_multi_instance()
 
-        existing_post_data = database.ref.get()
+        existing_post_data = {}
+        if database:
+            existing_post_data = database.ref.get()
         threadFutures = []
         with ThreadPoolExecutor(max_workers=4) as executor:
             for worker, partition in enumerate(partitions):

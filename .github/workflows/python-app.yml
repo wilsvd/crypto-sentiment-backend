@@ -2,9 +2,9 @@ name: Python application #name of our applications, name doesn't matter
 
 on: #our triggers, push and pull request, it only performs on the main branch.
     push:
-        branches: ["main"]
+        branches: ["main", "develop"]
     pull_request:
-        branches: ["main"]
+        branches: ["main", "develop"]
 
 permissions:
     contents: read
@@ -37,7 +37,7 @@ jobs: #jobs are essentially our build tasks
                   path: .venv
                   key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
             - name: Install dependencies
-              working-directory: ./ #We're matching our project structure
+              working-directory: ./src #We're matching our project structure
               run: poetry install
               if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
             - name: Lint with flake8

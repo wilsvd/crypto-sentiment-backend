@@ -1,9 +1,7 @@
-from cmc_api import CoinMarketCapAPI
-from reddit_api import RedditAPI
-from process_text import TextProcessor
+from src.cmc_api import CoinMarketCapAPI
+from src.reddit_api import RedditAPI
+from src.process_text import TextProcessor
 
-# from pprint import pprint
-from praw.models.reddit.submission import Submission
 
 import json
 
@@ -34,10 +32,10 @@ class DataCollector:
         coin_ids = self._get_coin_ids()
         ids = ",".join(coin_ids)
         cmc_meta = self.cmc.get_Cryptocurrency_Meta_Info(ids)
-        subreddits = self._clean_coin_data(ids=coin_ids, coin_data=cmc_meta["data"])
+        subreddits = self._clean_data(ids=coin_ids, coin_data=cmc_meta["data"])
         return subreddits
 
-    def _clean_coin_data(self, ids, coin_data):
+    def _clean_data(self, ids, coin_data):
         subreddits = []
         for id in ids:
             names = []
@@ -50,7 +48,7 @@ class DataCollector:
             subreddits.append(names)
         return subreddits
 
-    def _get_submission(self, subreddit: str = "Cryptocurrency", post_limit=50):
+    def _get_submission(self, subreddit="Cryptocurrency", post_limit=50):
         ratings = {}
         encoding = [
             "negative",
@@ -64,7 +62,7 @@ class DataCollector:
         for submission in self.reddit.subreddit(subreddit).hot():
             if count == post_limit:
                 break
-            if submission.stickied == False and TextProcessor().is_question(
+            if not submission.stickied and TextProcessor().is_question(
                 submission.title
             ):
                 ratings[submission.title] = encoding
@@ -87,8 +85,8 @@ class DataCollector:
         for subreddits_info in subreddits:
             subreddit = self._get_valid_subreddit(subreddits_info)
             overall_feeling[subreddit] = data._get_submission(subreddit)
-
-        overall_feeling["Cryptocurrency"] = data._get_submission("Cryptocurrency", 100)
+        result = data._get_submission("Cryptocurrency", 100)
+        overall_feeling["Cryptocurrency"] = result
         overall_feeling["CryptoMoonShoots"] = data._get_submission(
             "CryptoMoonShoots", 100
         )

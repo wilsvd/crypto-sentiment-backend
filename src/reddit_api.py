@@ -1,7 +1,6 @@
 import os
 import praw
 
-from praw import models
 from dotenv import load_dotenv
 import logging
 

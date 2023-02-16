@@ -1,8 +1,6 @@
 from transformers import pipeline
 
-from pprint import pprint
-
-MODEL = f"cardiffnlp/twitter-roberta-base-sentiment-latest"
+MODEL = "cardiffnlp/twitter-roberta-base-sentiment-latest"
 
 
 class SentimentClassifier:
@@ -27,6 +25,7 @@ class SentimentClassifier:
         predictions = self.sentiment_task(post_titles, batch_size=16)
 
         for i in range(len(post_ids)):
-            post_sentiments[post_ids[i]] = self._get_encoding(predictions[i]["label"])
+            encoding = self._get_encoding(predictions[i]["label"])
+            post_sentiments[post_ids[i]] = encoding
 
         return post_sentiments

@@ -2,6 +2,7 @@ from reddit_api import RedditAPI
 from process_text import TextProcessor
 from classifier import SentimentClassifier
 from firebase import FirebaseDatabase
+from prawcore.exceptions import NotFound
 
 import numpy as np
 
@@ -36,20 +37,19 @@ class SentimentCollector:
                 if submission.id in seen_submissions:
                     continue
 
-                if submission.stickied == False and TextProcessor().is_question(
+                if not submission.stickied and TextProcessor().is_question(
                     submission.title
                 ):
                     posts[submission.id] = submission.title
 
             print(reddit_helper.auth.limits)
-            # Account for a division by 0 error by just returning None (Effectively ignoring the subreddit)
 
-            new_sentiment_predictions = {}
+            new_sent_preds = {}
             if len(posts) > 0:
-                new_sentiment_predictions = self.classifier.predict_sentiment(posts)
+                new_sent_preds = self.classifier.predict_sentiment(posts)
 
-            if new_sentiment_predictions and len(new_sentiment_predictions) > 0:
-                for key, value in new_sentiment_predictions.items():
+            if new_sent_preds and len(new_sent_preds) > 0:
+                for key, value in new_sent_preds.items():
                     total_sentiments[key] = value
             if seen_submissions and len(seen_submissions) > 0:
                 for key, value in seen_submissions.items():
@@ -62,28 +62,28 @@ class SentimentCollector:
                 "posts": total_sentiments,
                 "sentiment": sentiment,
             }
-        except:
+        except NotFound:
             print("Subreddit does not exist")
             return None
 
-    def find_partition_sentiment(self, partition, reddit_helper, existing_post_data):
+    def find_partition_sentiment(self, partition, reddit_helper, stored_posts):
         partition_sentiment = {}
 
         for subreddit in partition:
 
             if (
-                existing_post_data
-                and "data" in existing_post_data
-                and subreddit in existing_post_data["data"]
+                stored_posts
+                and "data" in stored_posts
+                and subreddit in stored_posts["data"]
             ):
-                sub_info = existing_post_data["data"][subreddit]
-                result = self._get_submission(reddit_helper, subreddit, sub_info)
-                if result:
-                    partition_sentiment[subreddit] = result
+                sub_info = stored_posts["data"][subreddit]
+                res = self._get_submission(reddit_helper, subreddit, sub_info)
+                if res:
+                    partition_sentiment[subreddit] = res
             else:
-                result = self._get_submission(reddit_helper, subreddit, {})
-                if result:
-                    partition_sentiment[subreddit] = result
+                res = self._get_submission(reddit_helper, subreddit, {})
+                if res:
+                    partition_sentiment[subreddit] = res
 
         return partition_sentiment
 

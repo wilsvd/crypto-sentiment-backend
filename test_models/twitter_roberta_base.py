@@ -11,10 +11,11 @@ from joblib import dump, load
 def preprocess(text):
     new_text = []
     for t in text.split(" "):
-        t = '@user' if t.startswith('@') and len(t) > 1 else t
-        t = 'http' if t.startswith('http') else t
+        t = "@user" if t.startswith("@") and len(t) > 1 else t
+        t = "http" if t.startswith("http") else t
         new_text.append(t)
     return " ".join(new_text)
+
 
 MODEL = f"cardiffnlp/twitter-roberta-base-sentiment-latest"
 tokenizer = AutoTokenizer.from_pretrained(MODEL)
@@ -24,6 +25,7 @@ model = AutoModelForSequenceClassification.from_pretrained(MODEL)
 
 data = extract_data()
 
+
 def get_rating(ratings):
     if "positive" in ratings:
         return 1
@@ -32,13 +34,14 @@ def get_rating(ratings):
     else:
         return -1
 
+
 references = []
 predictions = []
 for post_data in data:
     text = post_data[0]
     ratings = post_data[1]
     text = preprocess(text)
-    encoded_input = tokenizer(text, return_tensors='pt')
+    encoded_input = tokenizer(text, return_tensors="pt")
     output = model(**encoded_input)
     scores = output[0][0].detach().numpy()
     scores = softmax(scores)
@@ -50,5 +53,5 @@ for post_data in data:
     references.append(get_rating(ratings))
 
 data_tuples = list(zip(predictions, references))
-df = pd.DataFrame(data_tuples, columns=['Predict Label','Ground Label'])
+df = pd.DataFrame(data_tuples, columns=["Predict Label", "Ground Label"])
 dump(df, "./test_models/joblibs/twitter_roberta_comparison.joblib")

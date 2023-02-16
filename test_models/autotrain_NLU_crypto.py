@@ -7,10 +7,11 @@ from pprint import pprint
 from joblib import dump
 import pandas as pd
 
-MODEL =  "zainalq7/autotrain-NLU_crypto_sentiment_analysis-754123133"
+MODEL = "zainalq7/autotrain-NLU_crypto_sentiment_analysis-754123133"
 model = AutoModelForSequenceClassification.from_pretrained(MODEL)
 config = AutoConfig.from_pretrained(MODEL)
 tokenizer = AutoTokenizer.from_pretrained(MODEL)
+
 
 def get_rating(ratings):
     if "positive" in ratings:
@@ -19,6 +20,7 @@ def get_rating(ratings):
         return 0
     else:
         return -1
+
 
 data = extract_data()
 
@@ -34,13 +36,13 @@ for post_data in data:
     ranking = np.argsort(scores)
     ranking = ranking[::-1]
     prediction = config.id2label[ranking[0]].lower()
-    
+
     if prediction == "neutral":
         print("YES")
-        
+
     predictions.append(get_rating(prediction))
     references.append(get_rating(ratings))
-    
+
 data_tuples = list(zip(predictions, references))
-df = pd.DataFrame(data_tuples, columns=['Predict Label','Ground Label'])
+df = pd.DataFrame(data_tuples, columns=["Predict Label", "Ground Label"])
 dump(df, "./test_models/joblibs/autotrain_nlu_crypto_comparison.joblib")

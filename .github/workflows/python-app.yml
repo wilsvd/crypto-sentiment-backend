@@ -1,4 +1,4 @@
-name: Python application #name of our applications, name doesn't matter
+name: Crypto Sentiment Backend
 
 on: #our triggers, push and pull request, it only performs on the main branch.
     push:

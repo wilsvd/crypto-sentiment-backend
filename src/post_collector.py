@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 # TODO: Use the post limit specified
-POST_LIMIT = 50
+POST_LIMIT = 100
 
 
 class SentimentCollector:
@@ -28,7 +28,6 @@ class SentimentCollector:
         seen_submissions = {}
         if sub_info and "posts" in sub_info:
             seen_submissions = sub_info["posts"]
-
         try:
             total_sentiments = {}
             posts = {}
@@ -47,12 +46,21 @@ class SentimentCollector:
             new_sent_preds = {}
             if len(posts) > 0:
                 new_sent_preds = self.classifier.predict_sentiment(posts)
-
+            posts_added = 0
             if new_sent_preds and len(new_sent_preds) > 0:
                 for key, value in new_sent_preds.items():
                     total_sentiments[key] = value
+                    posts_added += 1
+            # NOTE: Python 3.6+ Dict maintains insertion order by default.
+            # Seen submissions will be put at the end of the dictionary.
+            #
+            # When we retrieve the stored data we read from BEGINNING TO END
+            # The most recent data in the SEEN will be at the begining.
             if seen_submissions and len(seen_submissions) > 0:
                 for key, value in seen_submissions.items():
+                    if posts_added >= POST_LIMIT:
+                        break
+                    posts_added += 1
                     total_sentiments[key] = value
 
             sentiment = round(

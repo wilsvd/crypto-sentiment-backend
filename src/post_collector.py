@@ -1,8 +1,10 @@
 from reddit_api import RedditAPI
 from process_text import TextProcessor
 from classifier import SentimentClassifier
-from firebase import FirebaseDatabase
 from prawcore.exceptions import NotFound
+from firestore import FirestoreDatabase
+
+from datetime import datetime
 
 import numpy as np
 
@@ -20,108 +22,101 @@ class SentimentCollector:
     def __init__(self) -> None:
         self.r_api = RedditAPI()
         self.classifier = SentimentClassifier()
+        self.database = FirestoreDatabase()
+        self.tp = TextProcessor()
 
     # TODO: Optimise _get_submission function.
-    def _get_submission(self, reddit_helper, subreddit, sub_info):
+    def _get_submission(self, reddit_helper, subreddit):
         # NOTE: PRAW is fetching 100 submissions in one request.
 
-        seen_submissions = {}
-        if sub_info and "posts" in sub_info:
-            seen_submissions = sub_info["posts"]
+        # historical_data = {"datetime": now_datetime, "total_sentiment": sentiment}
+        # post_data = {
+        #     "datetime": now_datetime,
+        #     "title": f"Some text with number: {i}",
+        #     "sentiment": sentiment,
+        # }
+
         try:
-            total_sentiments = {}
-            posts = {}
-            submissions = reddit_helper.subreddit(subreddit).hot()
-            for submission in submissions:
-                if submission.id in seen_submissions:
+            seen_posts = {}
+            new_posts = {}
+            posts = reddit_helper.subreddit(subreddit).hot()
+            now_datetime = datetime.now()
+
+            # Check if a post already exists
+
+            for post in posts:
+                data = self.database.post_data_exists(subreddit, post.id)
+                if data.exists:
+                    seen_posts[post.id] = data.to_dict()["sentiment"]
                     continue
 
-                if not submission.stickied and TextProcessor().is_question(
-                    submission.title
-                ):
-                    posts[submission.id] = submission.title
+                if not post.stickied and self.tp.is_question(post.title):
+                    new_posts[post.id] = post.title
 
             print(reddit_helper.auth.limits)
 
             new_sent_preds = {}
-            if len(posts) > 0:
-                new_sent_preds = self.classifier.predict_sentiment(posts)
-            posts_added = 0
-            if new_sent_preds and len(new_sent_preds) > 0:
-                for key, value in new_sent_preds.items():
-                    total_sentiments[key] = value
-                    posts_added += 1
-            # NOTE: Python 3.6+ Dict maintains insertion order by default.
-            # Seen submissions will be put at the end of the dictionary.
-            #
-            # When we retrieve the stored data we read from BEGINNING TO END
-            # The most recent data in the SEEN will be at the begining.
-            if seen_submissions and len(seen_submissions) > 0:
-                for key, value in seen_submissions.items():
-                    if posts_added >= POST_LIMIT:
-                        break
-                    posts_added += 1
-                    total_sentiments[key] = value
+            if len(new_posts) > 0:
+                new_sent_preds = self.classifier.predict_sentiment(new_posts)
 
-            sentiment = round(
-                sum(list(total_sentiments.values())) / len(total_sentiments), 2
+            # Combine titles and sentiments into one
+            # NOTE: posts and new_sent_preds share the same keys since the keys are the submission ids.
+
+            for post_id in new_posts.keys():
+                title = new_posts[post_id]
+                sentiment = new_sent_preds[post_id]
+
+                post_data = {
+                    "datetime": now_datetime,
+                    "title": title,
+                    "sentiment": sentiment,
+                }
+                self.database.add_post_data(subreddit, post_id, post_data)
+            total_sentiment = self.database.get_total_sentiment(subreddit)
+            total_posts = self.database.get_count(subreddit)
+            self.database.add_historical_data(
+                subreddit,
+                {
+                    "datetime": now_datetime,
+                    "sub_sentiment": round(total_sentiment / total_posts, 2),
+                },
             )
-            return {
-                "posts": total_sentiments,
-                "sentiment": sentiment,
-            }
+            # Get the new total sentiment data for the subreddit
+
         except NotFound:
             print("Subreddit does not exist")
             return None
 
-    def find_partition_sentiment(self, partition, reddit_helper, stored_posts):
-        partition_sentiment = {}
+    def find_partition_sentiment(self, partition, reddit_helper):
 
         for subreddit in partition:
+            self._get_submission(reddit_helper, subreddit)
 
-            if (
-                stored_posts
-                and "data" in stored_posts
-                and subreddit in stored_posts["data"]
-            ):
-                sub_info = stored_posts["data"][subreddit]
-                res = self._get_submission(reddit_helper, subreddit, sub_info)
-                if res:
-                    partition_sentiment[subreddit] = res
-            else:
-                res = self._get_submission(reddit_helper, subreddit, {})
-                if res:
-                    partition_sentiment[subreddit] = res
-
-        return partition_sentiment
-
-    def find_crypto_sentiments(
-        self, total_subreddits: list, database: FirebaseDatabase
-    ):
-        overall_feeling = {}
+    def find_crypto_sentiments(self, total_subreddits: list):
 
         # Partition total_subreddits as evenly as possible
         partitions = np.array_split(total_subreddits, 4)
 
         reddit_helpers = self.r_api.multi_acc_multi_instance()
 
-        existing_post_data = {}
-        if database:
-            existing_post_data = database.ref.get()
-        threadFutures = []
         with ThreadPoolExecutor(max_workers=4) as executor:
             for worker, partition in enumerate(partitions):
                 reddit_helper = reddit_helpers[worker]
-                future = executor.submit(
+                executor.submit(
                     self.find_partition_sentiment,
                     partition,
                     reddit_helper,
-                    existing_post_data,
                 )
-                threadFutures.append(future)
 
-        for future in threadFutures:
-            partition_dict: dict = future.result()
-            for key, value in partition_dict.items():
-                overall_feeling[key] = value
-        return overall_feeling
+
+# Template:
+# historical_data = {"time": now_time, "sentiment": sentiment}
+# post_data = {
+#     "date_added": now_time,
+#     "title": f"Some text with number: {i}",
+#     "sentiment": sentiment,
+# }
+
+# submission_id = f"submission{i}"
+# firedb.add_historical_data("ethereum", historical_data)
+# firedb.add_post_data("ethereum", submission_id, post_data)

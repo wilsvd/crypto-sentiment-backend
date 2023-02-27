@@ -47,7 +47,6 @@ class SentimentCollector:
 
             for post in posts:
                 data = self.firedb.post_data_exists(subreddit, post.id)
-                print(data.exists)
 
                 if data.exists:
                     seen_posts[post.id] = data.to_dict()["sentiment"]
@@ -77,7 +76,7 @@ class SentimentCollector:
                 }
                 self.firedb.batch_write(batch, subreddit, post_id, post_data)
             batch.commit()
-            # self.firedb.del_old_n_posts(batch, subreddit)
+            self.firedb.del_old_n_posts(batch, subreddit)
 
             total_sentiment = self.firedb.get_total_sentiment(subreddit)
             total_posts = self.firedb.get_count(subreddit)

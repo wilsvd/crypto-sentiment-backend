@@ -21,6 +21,7 @@ SERVICE_ACCOUNT = {
     "client_x509_cert_url": os.getenv("FIREBASE_CLIENT_X509_CERT_URL"),
 }
 
+
 TOTAL_POSTS = 100
 DESCENDING = firestore.Query.DESCENDING
 
@@ -73,7 +74,6 @@ class FirestoreDatabase:
             for submission in submissions:
                 document_id = submission.id
                 self.batch_delete(batch, crypto, document_id)
-            print("Write")
             batch.commit()
         else:
             print("Hey you don't have enough")
@@ -127,25 +127,30 @@ class FirestoreDatabase:
             .collection("posts")
             .document(submission_id)
         )
-        # print("Hi")
         (batch.set(sub_ref, data))
 
 
-firedb = FirestoreDatabase()
-now_datetime = datetime.now()
-print(now_datetime)
+# firedb = FirestoreDatabase()
+# now_datetime = datetime.now()
+# print(now_datetime)
 
+# post_data = {
+#     "datetime": now_datetime,
+#     "title": "good stuff",
+#     "sentiment": 0.7,
+# }
 
-firedb.get_count("Crypto_com")
+# firedb.add_post_data("ethereum", "sub1234", post_data)
+# firedb.get_count("Crypto_com")
 # batch = firedb.db.batch()
 # print("Starting")
 
 # for i in range(100):
-#     post_data = {
-#         "datetime": now_datetime,
-#         "title": "good stuff",
-#         "sentiment": 0.7,
-#     }
+# post_data = {
+#     "datetime": now_datetime,
+#     "title": "good stuff",
+#     "sentiment": 0.7,
+# }
 #     firedb.batch_write(batch, "Crypto_com", f"submission{i}", post_data)
 # batch.commit()
 # print("Deleting old posts")

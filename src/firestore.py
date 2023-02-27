@@ -1,3 +1,4 @@
+from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
@@ -20,7 +21,7 @@ SERVICE_ACCOUNT = {
     "client_x509_cert_url": os.getenv("FIREBASE_CLIENT_X509_CERT_URL"),
 }
 
-
+TOTAL_POSTS = 100
 DESCENDING = firestore.Query.DESCENDING
 
 
@@ -29,6 +30,7 @@ class FirestoreDatabase:
         cred = credentials.Certificate(SERVICE_ACCOUNT)
         firebase_admin.initialize_app(cred)
         self.db = firestore.client()
+        print("SETup")
 
     def add_historical_data(self, crypto: str, data: dict):
         col_ref = (
@@ -56,10 +58,31 @@ class FirestoreDatabase:
         # Store only 100 posts for a cryptocurrency
         col_ref = self.db.collection("sentiments").document(crypto).collection("posts")
         count = self.get_count(crypto)
-        if count > 100:
+        if count > TOTAL_POSTS:
             self.del_old_post_submission(crypto)
         else:
             col_ref.document(submission_id).set(data)
+
+    def del_old_n_posts(self, batch, crypto: str):
+        existing_post_counts = self.get_count(crypto)
+        print(existing_post_counts)
+        if existing_post_counts > TOTAL_POSTS:
+            n_posts_to_remove = existing_post_counts - TOTAL_POSTS
+            submissions = self.get_n_oldest_posts(crypto, n_posts_to_remove)
+
+            for submission in submissions:
+                document_id = submission.id
+                self.batch_delete(batch, crypto, document_id)
+            print("Write")
+            batch.commit()
+        else:
+            print("Hey you don't have enough")
+
+    def get_n_oldest_posts(self, crypto: str, n: int):
+        col_ref = self.db.collection("sentiments").document(crypto).collection("posts")
+        res = col_ref.order_by("datetime").limit(n)
+
+        return res.get()
 
     def del_old_post_submission(self, crypto: str):
         submission_id = self.get_oldest_post_id(crypto)
@@ -67,16 +90,16 @@ class FirestoreDatabase:
 
         col_ref.document(submission_id).delete()
 
+    def get_oldest_post_id(self, crypto: str):
+        col_ref = self.db.collection("sentiments").document(crypto).collection("posts")
+        res = col_ref.order_by("datetime").limit(1)
+        return res.get()[0].id
+
     def get_count(self, crypto: str):
         col_ref = self.db.collection("sentiments").document(crypto).collection("posts")
         query = col_ref.count()
         count = getattr(query.get()[0][0], "value")
         return count
-
-    def get_oldest_post_id(self, crypto: str):
-        col_ref = self.db.collection("sentiments").document(crypto).collection("posts")
-        res = col_ref.order_by("date_added").limit(1)
-        return res.get()[0].id
 
     def get_total_sentiment(self, crypto: str):
         col_ref = self.db.collection("sentiments").document(crypto).collection("posts")
@@ -86,3 +109,47 @@ class FirestoreDatabase:
         negNum = getattr(negQuery[0][0], "value")
 
         return posNum - negNum
+
+    def batch_delete(self, batch, crypto: str, submission_id: int):
+        sub_ref = (
+            self.db.collection("sentiments")
+            .document(crypto)
+            .collection("posts")
+            .document(submission_id)
+        )
+        batch.delete(sub_ref)
+
+    def batch_write(self, batch, crypto: str, submission_id, data):
+        # print("Entering")
+        sub_ref = (
+            self.db.collection("sentiments")
+            .document(crypto)
+            .collection("posts")
+            .document(submission_id)
+        )
+        # print("Hi")
+        (batch.set(sub_ref, data))
+
+
+firedb = FirestoreDatabase()
+now_datetime = datetime.now()
+print(now_datetime)
+
+
+firedb.get_count("Crypto_com")
+# batch = firedb.db.batch()
+# print("Starting")
+
+# for i in range(100):
+#     post_data = {
+#         "datetime": now_datetime,
+#         "title": "good stuff",
+#         "sentiment": 0.7,
+#     }
+#     firedb.batch_write(batch, "Crypto_com", f"submission{i}", post_data)
+# batch.commit()
+# print("Deleting old posts")
+# firedb.del_old_n_posts(batch, "Crypto_com")
+# batch.commit()
+# firedb.get_count("Crypto_com")
+# print("Ending")

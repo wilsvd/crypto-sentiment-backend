@@ -22,7 +22,7 @@ class SentimentCollector:
     def __init__(self) -> None:
         self.r_api = RedditAPI()
         self.classifier = SentimentClassifier()
-        self.database = FirestoreDatabase()
+        self.firedb = FirestoreDatabase()
         self.tp = TextProcessor()
 
     # TODO: Optimise _get_submission function.
@@ -37,15 +37,18 @@ class SentimentCollector:
         # }
 
         try:
+            now_datetime = datetime.now()
+
             seen_posts = {}
             new_posts = {}
             posts = reddit_helper.subreddit(subreddit).hot()
-            now_datetime = datetime.now()
 
             # Check if a post already exists
 
             for post in posts:
-                data = self.database.post_data_exists(subreddit, post.id)
+                data = self.firedb.post_data_exists(subreddit, post.id)
+                print(data.exists)
+
                 if data.exists:
                     seen_posts[post.id] = data.to_dict()["sentiment"]
                     continue
@@ -62,6 +65,7 @@ class SentimentCollector:
             # Combine titles and sentiments into one
             # NOTE: posts and new_sent_preds share the same keys since the keys are the submission ids.
 
+            batch = self.firedb.db.batch()
             for post_id in new_posts.keys():
                 title = new_posts[post_id]
                 sentiment = new_sent_preds[post_id]
@@ -71,10 +75,13 @@ class SentimentCollector:
                     "title": title,
                     "sentiment": sentiment,
                 }
-                self.database.add_post_data(subreddit, post_id, post_data)
-            total_sentiment = self.database.get_total_sentiment(subreddit)
-            total_posts = self.database.get_count(subreddit)
-            self.database.add_historical_data(
+                self.firedb.batch_write(batch, subreddit, post_id, post_data)
+            batch.commit()
+            # self.firedb.del_old_n_posts(batch, subreddit)
+
+            total_sentiment = self.firedb.get_total_sentiment(subreddit)
+            total_posts = self.firedb.get_count(subreddit)
+            self.firedb.add_historical_data(
                 subreddit,
                 {
                     "datetime": now_datetime,
@@ -86,6 +93,8 @@ class SentimentCollector:
         except NotFound:
             print("Subreddit does not exist")
             return None
+        except:
+            print("Some error occurred")
 
     def find_partition_sentiment(self, partition, reddit_helper):
 

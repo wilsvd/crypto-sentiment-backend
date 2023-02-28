@@ -30,12 +30,15 @@ class FirestoreDatabase:
         cred = credentials.Certificate(SERVICE_ACCOUNT)
         firebase_admin.initialize_app(cred)
         self.db = firestore.client()
-        print("SETup")
 
     def add_historical_data(self, crypto: str, data: dict):
+        crypto_doc = self.db.collection("sentiments").document(crypto)
+        crypto_doc.set({"crypto": crypto})
+
         col_ref = (
             self.db.collection("sentiments").document(crypto).collection("history")
         )
+
         col_ref.add(data)
 
     def get_post_data(self, crypto: str):

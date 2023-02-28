@@ -1,4 +1,3 @@
-from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
@@ -128,33 +127,3 @@ class FirestoreDatabase:
             .document(submission_id)
         )
         (batch.set(sub_ref, data))
-
-
-# firedb = FirestoreDatabase()
-# now_datetime = datetime.now()
-# print(now_datetime)
-
-# post_data = {
-#     "datetime": now_datetime,
-#     "title": "good stuff",
-#     "sentiment": 0.7,
-# }
-
-# firedb.add_post_data("ethereum", "sub1234", post_data)
-# firedb.get_count("Crypto_com")
-# batch = firedb.db.batch()
-# print("Starting")
-
-# for i in range(100):
-# post_data = {
-#     "datetime": now_datetime,
-#     "title": "good stuff",
-#     "sentiment": 0.7,
-# }
-#     firedb.batch_write(batch, "Crypto_com", f"submission{i}", post_data)
-# batch.commit()
-# print("Deleting old posts")
-# firedb.del_old_n_posts(batch, "Crypto_com")
-# batch.commit()
-# firedb.get_count("Crypto_com")
-# print("Ending")

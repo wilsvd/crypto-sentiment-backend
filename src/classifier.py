@@ -17,13 +17,9 @@ class SentimentClassifier:
         else:
             return -1
 
-    def predict_sentiment(self, posts: dict):
-
+    def predict_sentiment(self, post_ids: list, post_titles: list):
         post_sentiments = {}
-        post_ids = list(posts.keys())
-        post_titles = list(posts.values())
         predictions = self.sentiment_task(post_titles, batch_size=16)
-
         for i in range(len(post_ids)):
             encoding = self._get_encoding(predictions[i]["label"])
             post_sentiments[post_ids[i]] = encoding

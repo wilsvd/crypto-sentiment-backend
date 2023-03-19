@@ -3,7 +3,7 @@ from cmc_api import CoinMarketCapAPI
 # NOTE: 965 Is the upper limit. If I go higher than I get an Error
 # TODO: Adapt the CMC API Setup to able to
 # retrieve more than 965 cryptocurrencies.
-CRYPTO_LIMIT = "10"
+CRYPTO_LIMIT = "200"
 
 
 class CoinCollector:

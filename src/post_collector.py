@@ -33,6 +33,7 @@ class SentimentCollector:
 
     # TODO: Optimise _get_submission function.
     def _get_submission(self, reddit_helper, crypto_name, subreddit):
+
         # NOTE: PRAW is fetching 100 submissions in one request.
         try:
             new_posts = {}
@@ -51,7 +52,7 @@ class SentimentCollector:
 
             print(reddit_helper.auth.limits)
 
-            self._store_crypto_data(crypto_name, new_posts)
+            # self._store_crypto_data(crypto_name, new_posts)
         except NotFound:
             print("Subreddit does not exist")
             return None

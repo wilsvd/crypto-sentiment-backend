@@ -3,7 +3,7 @@ from cmc_api import CoinMarketCapAPI
 # NOTE: 965 Is the upper limit. If I go higher than I get an Error
 # TODO: Adapt the CMC API Setup to able to
 # retrieve more than 965 cryptocurrencies.
-CRYPTO_LIMIT = "100"
+CRYPTO_LIMIT = "10"
 
 
 class CoinCollector:
@@ -13,8 +13,6 @@ class CoinCollector:
     def __init__(self) -> None:
         self.cmc = CoinMarketCapAPI()
         self._set_coin_ids()
-
-        # First in - First out.
 
     def _get_coin_ids(self):
         return self.m_ids
@@ -26,16 +24,10 @@ class CoinCollector:
             ids.append(str(item["id"]))
         self.m_ids = ids
 
-    def get_coin_subreddits(self):
-        coin_ids = self._get_coin_ids()
-        ids = ",".join(coin_ids)
-        cmc_meta = self.cmc.get_Cryptocurrency_Meta_Info(ids)
-        subreddits = self._clean_data(ids=coin_ids, coin_data=cmc_meta["data"])
-        return subreddits
-
     def _clean_data(self, ids, coin_data):
         subreddits = []
         for id in ids:
+            cryptoName: str = coin_data[id]["name"]
             subredditName: str = coin_data[id]["subreddit"]
             if subredditName != "":
                 cleanName = "".join(
@@ -46,6 +38,13 @@ class CoinCollector:
                         )
                     )
                 )
-                subreddits.append(cleanName)
+                subreddits.append([cryptoName, cleanName])
 
+        return subreddits
+
+    def get_coin_subreddits(self):
+        coin_ids = self._get_coin_ids()
+        ids = ",".join(coin_ids)
+        cmc_meta = self.cmc.get_Cryptocurrency_Meta_Info(ids)
+        subreddits = self._clean_data(ids=coin_ids, coin_data=cmc_meta["data"])
         return subreddits

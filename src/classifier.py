@@ -6,7 +6,7 @@ MODEL = "cardiffnlp/twitter-roberta-base-sentiment-latest"
 class SentimentClassifier:
     def __init__(self) -> None:
         self.sentiment_task = pipeline(
-            "sentiment-analysis", model=MODEL, tokenizer=MODEL, device=0
+            "sentiment-analysis", model=MODEL, tokenizer=MODEL
         )
 
     def _get_encoding(self, ratings):

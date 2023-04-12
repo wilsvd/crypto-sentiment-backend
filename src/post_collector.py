@@ -52,7 +52,7 @@ class SentimentCollector:
 
             print(reddit_helper.auth.limits)
 
-            self._store_crypto_data(crypto_name, new_posts)
+            self._store_crypto_data(crypto_name, subreddit, new_posts)
         except NotFound:
             print("Subreddit does not exist")
             return None
@@ -60,7 +60,7 @@ class SentimentCollector:
             print("Some error occurred")
             return None
 
-    def _store_crypto_data(self, crypto_name: str, new_posts: dict):
+    def _store_crypto_data(self, crypto_name: str, subreddit: str, new_posts: dict):
         try:
             # Calculate new sentiment based on new crypto posts
             new_sent_preds = {}
@@ -97,6 +97,7 @@ class SentimentCollector:
             # Store historical data in Firestore
             self.firedb.add_historical_data(
                 crypto_name,
+                subreddit,
                 {
                     "datetime": now_datetime,
                     "sub_sentiment": round(total_sentiment / total_posts, 2),

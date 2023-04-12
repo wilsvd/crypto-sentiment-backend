@@ -31,9 +31,9 @@ class FirestoreDatabase:
         firebase_admin.initialize_app(cred)
         self.db = firestore.client()
 
-    def add_historical_data(self, crypto: str, data: dict):
+    def add_historical_data(self, crypto: str, subreddit: str, data: dict):
         crypto_doc = self.db.collection("sentiments").document(crypto)
-        crypto_doc.set({"crypto": crypto})
+        crypto_doc.set({"crypto": crypto, "subreddit": subreddit})
 
         col_ref = (
             self.db.collection("sentiments").document(crypto).collection("history")

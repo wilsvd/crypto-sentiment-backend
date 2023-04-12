@@ -33,7 +33,14 @@ class FirestoreDatabase:
 
     def add_historical_data(self, crypto: str, subreddit: str, data: dict):
         crypto_doc = self.db.collection("sentiments").document(crypto)
-        crypto_doc.set({"crypto": crypto, "subreddit": subreddit})
+
+        crypto_doc.set(
+            {
+                "crypto": crypto,
+                "subreddit": subreddit,
+                "latest_sentiment": data["sub_sentiment"],
+            }
+        )
 
         col_ref = (
             self.db.collection("sentiments").document(crypto).collection("history")

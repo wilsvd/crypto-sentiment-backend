@@ -19,7 +19,8 @@ The following technologies were used in this project:
 -   Python Reddit API Wrapper (PRAW)
 -   Sentiment Analysis (Hugging Face model ["twitter-roberta-base-sentiment-latest"](https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest))
 -   Firebase Cloud Firestore
--   Google Compute Engine for Deployment
+-   Google Compute Engine (GCE) for Deployment
+-   Cronitor
 
 ## Setup Instructions
 
@@ -73,9 +74,15 @@ FIREBASE_CLIENT_X509_CERT_URL = ""
 
 ## Usage
 
-To use this project, follow these steps:
+To use this project and consistenly collect data, follow these steps:
 
-1. Run the script `python src/scheduler.py` to start collecting and analyzing cryptocurrency Reddit posts.
+1. Run the script python src/scheduler.py to confirm that it is working.
+2. If you want to use your own computer, you can skip steps 3 to 5.
+3. Create an account with a cloud provider, such as Google Cloud.
+4. Set up a virtual machine on the cloud provider's platform.
+5. Install the necessary dependencies and configure the environment variables as specified in the Setup section.
+6. Create a cron job to schedule the script to run on a consistent basis.
+7. Use a monitoring tool such as Cronitor to monitor the cron job and receive alerts if it fails.
 
 ## Dependency Documentation
 
